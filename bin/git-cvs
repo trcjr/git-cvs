@@ -227,6 +227,9 @@ sub cvs_pull {
     my $cvsroot        = $self->cvsroot;
     my $cvsmodule      = $self->cvsmodule;
 
+    croak "cvsmodule parameter undefined"
+	unless $cvsmodule;
+
     mkpath $gitworking;
 
 	# If .git exists, git-cvsimport will expect there to be a branch
