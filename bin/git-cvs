@@ -639,6 +639,7 @@ Options for push:
   --branch                 - The branch to find patches in (defaults to 
                              the current branch, or master)
 USAGE
+#' Single quote for Emacs colorization fix.
 
 # set this environment variable so ssh is used, if it is not already set
 $ENV{CVS_RSH} ||= 'ssh';
@@ -747,7 +748,7 @@ pre-existing .git repository and try again. You should not run 'git
 init' before your first import. If it is not your first import,
 something is wrong, because $1 should already exist.
 ERROR
-	}
+	} #' Single quote for Emacs colorization fix
 	# other errors assumed internal, leave them as they are.
     die $@ if $@;
 
