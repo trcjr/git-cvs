@@ -11,3 +11,6 @@ errors. Filter them out.
 
 Add a '--from' option in cvs_push() as alternative to --commits to
 specify commit to start pushing from.
+
+Add warning about not having RCS tags in source.
+Remove from CVS checkout and pull into git.
