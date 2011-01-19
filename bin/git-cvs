@@ -27,7 +27,7 @@ my $GIT_DIR = '.git';
 my @ATTRS = 
     qw(branch format cvsroot cvsmodule gitworking
        gitdir config dryrun patch no_autocommit
-       logfile);
+       logfile cvsps_out);
 
 ## generate our accessors
 for my $attr (@ATTRS) {
@@ -76,6 +76,7 @@ sub new {
         'GitCvs::patch'          => $args{patch},
         'GitCvs::dryrun'         => !!$args{dryrun},
         'GitCvs::no_autocommit'  => !!$args{no_autocommit},
+        'GitCvs::cvsps_out'      => $args{cvsps_out},
     }, $class;
 
     # FIXME validate cvsroot, cvsmodule, gitworking
@@ -221,7 +222,6 @@ sub cvs_pull {
     my $self = shift;
     my %params = @_;
 
-    
     my $gda            = $self->_gitdir_arg;
     my $gitworking     = $self->gitworking;
     my $cvsroot        = $self->cvsroot;
@@ -253,8 +253,8 @@ sub cvs_pull {
     $self->logfile($logfile);
     print "logging output to $logfile\n";
 
-    my @options = qw(-a -p -x -v -k);
-    
+    my @options = qw(-a -v -k);
+    push @options, ("-p", "-x,--no-cvs-direct");
 
     if ($params{author_file}) {
         croak "No such file $params{author_file}"
@@ -262,7 +262,13 @@ sub cvs_pull {
 
         push @options,'-A', $params{author_file};
     }
-    
+
+    if ( $self->cvsps_out ) {
+        push(@options,
+             '-P', "'" . $self->cvsps_out . "'",
+             ); 
+     }
+
     push(@options,
          '-r', "'$REMOTE_FOR_CVS'",
          '-o', "'$CVS_HEAD_TRACKING_REF'", 
@@ -451,7 +457,7 @@ sub cvs_push {
     print "\n";
 
 
-    my @options = (qw(-p -v -u -w), "'$cvs_checkout_dir'");
+    my @options = (qw(-k -p -v -u -w), "'$cvs_checkout_dir'");
 
     # If we don't autocommit, we may need to force merges to updated
     # files
@@ -658,7 +664,8 @@ GetOptions("dry-run"       => \$config{dryrun},
            "logfile=s"     => \$config{logfile},
            "no-autocommit" => \$config{no_autocommit},
            "commits=s"     => \$commits,
-           "config=s"      => \$config_file) 
+           "config=s"      => \$config_file,
+           "cvsps-out=s"   => \$config{cvsps_out}) 
     or die "Failed to read parameters: $@";
 
 my $operation = shift @ARGV;
