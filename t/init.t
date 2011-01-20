@@ -4,7 +4,7 @@ use warnings;
 use FindBin qw($Bin);
 use File::Path qw(mkpath rmtree);
 use Shell qw(git cvs cd);
-use Test::More tests => 13;
+use Test::More tests => 16;
 
 # This test creates a CVS repo, then git-cvs pulls it somwhere else;
 # then tests editing in both git and cvs propagate, and finally,
@@ -37,7 +37,19 @@ sub git_cvs {
     return $out;
 }
 
-my $test_name = "init";
+sub slurp {
+    my $file = shift;
+    die "can't open $file: $!" 
+        unless open my $fh, '<', $file;
+    my $data;
+    while (<$fh>) {
+        $data .= $_;
+    }
+    close $fh;
+    return $data;
+}
+
+my $test_name = "rcs_keywords";
 my $data_dir = "$Bin/data/$test_name";
 my $temp_dir = "$Bin/temp/$test_name";
 my $cvs_repo = "$temp_dir/cvs";
@@ -46,7 +58,13 @@ my $cvs_work = "$temp_dir/cvs_template";
 
 rmtree $temp_dir;
 ok !-e $temp_dir, "temp dir deleted";
-mkpath $temp_dir, $cvs_repo, $git_work;
+diag "";
+diag "temp_dir: $temp_dir";
+diag "cvs_repo: $cvs_repo";
+diag "git_work: $git_work";
+diag "cvs_work: $cvs_work";
+diag "fromdir: $data_dir/cvs_template";
+mkpath $temp_dir, $cvs_repo, $git_work, { mode => 0711 };
 
 
 #mk_cvsrepo $cvs_repo;
@@ -60,6 +78,15 @@ cvs '-d', "$cvs_repo", 'import', '-m', '"initial import"', "cvs_template", 'vend
 my $cvs_file_c = "$cvs_repo/cvs_template/c.txt,v";
 ok -e $cvs_file_c, "$cvs_file_c exists";
 
+chdir $temp_dir;
+cvs '-d', "$cvs_repo", 'checkout', 'cvs_template';
+
+my $cvs_checkout_file_a = "$cvs_work/a.txt";
+ok -e $cvs_checkout_file_a, "$cvs_checkout_file_a exists";
+my $d = slurp $cvs_checkout_file_a;
+like($d, qr/\$Id: a\.txt,v 1\.1\.1\.1/, "$cvs_checkout_file_a has expanded RCS Id keyword");
+
+## Onto the git-cvs stuff
 #mk_gitrepo $git_work;
 chdir $git_work;
 
@@ -74,6 +101,11 @@ ok -f "$git_work/.git-cvs", ".git-cvs file created";
 git_cvs 'pull';
 
 ok -f "$git_work/c.txt", "$git_work/c.txt file created";
+
+my $git_checkout_file_a = "$git_work/a.txt";
+my $d = slurp $git_checkout_file_a;
+like($d, qr/\$Id\$/, "$git_checkout_file_a has unxpanded RCS Id keyword");
+
 
 # hackhack in Git
 my $git_file_new1 = "$git_work/new_git";
