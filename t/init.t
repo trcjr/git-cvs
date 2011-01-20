@@ -58,12 +58,6 @@ my $cvs_work = "$temp_dir/cvs_template";
 
 rmtree $temp_dir;
 ok !-e $temp_dir, "temp dir deleted";
-diag "";
-diag "temp_dir: $temp_dir";
-diag "cvs_repo: $cvs_repo";
-diag "git_work: $git_work";
-diag "cvs_work: $cvs_work";
-diag "fromdir: $data_dir/cvs_template";
 mkpath $temp_dir, $cvs_repo, $git_work, { mode => 0711 };
 
 
