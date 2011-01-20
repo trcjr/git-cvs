@@ -83,8 +83,12 @@ cvs '-d', "$cvs_repo", 'checkout', 'cvs_template';
 
 my $cvs_checkout_file_a = "$cvs_work/a.txt";
 ok -e $cvs_checkout_file_a, "$cvs_checkout_file_a exists";
-my $d = slurp $cvs_checkout_file_a;
-like($d, qr/\$Id: a\.txt,v 1\.1\.1\.1/, "$cvs_checkout_file_a has expanded RCS Id keyword");
+my $cvs_checkout_file_a_data = slurp $cvs_checkout_file_a;
+like(
+    $cvs_checkout_file_a_data,
+    qr/\$Id: a\.txt,v 1\.1\.1\.1/,
+    "$cvs_checkout_file_a has expanded RCS Id keyword"
+);
 
 ## Onto the git-cvs stuff
 #mk_gitrepo $git_work;
@@ -102,9 +106,10 @@ git_cvs 'pull';
 
 ok -f "$git_work/c.txt", "$git_work/c.txt file created";
 
-my $git_checkout_file_a = "$git_work/a.txt";
-my $d = slurp $git_checkout_file_a;
-like($d, qr/\$Id\$/, "$git_checkout_file_a has unxpanded RCS Id keyword");
+my $git_checkout_file_a      = "$git_work/a.txt";
+my $git_checkout_file_a_data = slurp $git_checkout_file_a;
+like( $git_checkout_file_a_data, qr/\$Id\$/,
+    "$git_checkout_file_a has unxpanded RCS Id keyword" );
 
 
 # hackhack in Git
