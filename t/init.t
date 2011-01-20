@@ -49,7 +49,7 @@ sub slurp {
     return $data;
 }
 
-my $test_name = "rcs_keywords";
+my $test_name = "init";
 my $data_dir = "$Bin/data/$test_name";
 my $temp_dir = "$Bin/temp/$test_name";
 my $cvs_repo = "$temp_dir/cvs";
