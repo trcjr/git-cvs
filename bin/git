@@ -35,7 +35,7 @@ my %param_count = ('--exec-path' => 1,
 my ($subcommand, @options);
 my $skip_counter = 0;
 while(my $arg = shift @ARGV) {
-    
+
     # Skip option parameters
     next if $skip_counter-- > 0;
 
@@ -71,8 +71,8 @@ if (defined $subcommand) {
     my $target = "$Bin/git-$subcommand";
     if (-f $target) {
 
-        warn "Invoking $target @ARGV\n"; # DEBUG
-        
+        #warn "Invoking $target @ARGV\n"; # DEBUG
+
         # Set $PATH to include our local executable path before the
         # standard $GIT_EXEC_PATH (somewhat like git does before
         # executing subcommands).
@@ -99,10 +99,7 @@ if (defined $subcommand) {
 # $PATH.  Unfortunately I don't know a simple way to do this, without
 # rewriting git itself.  So we don't bother.
 
-warn "Invoking $git @options @ARGV\n"; # DEBUG
+#warn "Invoking $git @options @ARGV\n"; # DEBUG
 
 # pass control to the git executable
-exec $git, @options, @ARGV; 
-
-
-    
+exec $git, @options, @ARGV;
