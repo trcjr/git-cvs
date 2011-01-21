@@ -27,7 +27,7 @@ my $GIT_DIR = '.git';
 my @ATTRS = 
     qw(branch format cvsroot cvsmodule gitworking
        gitdir config dryrun patch no_autocommit
-       logfile cvsps_out);
+       logfile cvsps_out expandrcskeywords);
 
 ## generate our accessors
 for my $attr (@ATTRS) {
@@ -77,6 +77,7 @@ sub new {
         'GitCvs::dryrun'         => !!$args{dryrun},
         'GitCvs::no_autocommit'  => !!$args{no_autocommit},
         'GitCvs::cvsps_out'      => $args{cvsps_out},
+        'GitCvs::expandrcskeywords' => $args{expandrcskeywords},
     }, $class;
 
     # FIXME validate cvsroot, cvsmodule, gitworking
@@ -253,7 +254,10 @@ sub cvs_pull {
     $self->logfile($logfile);
     print "logging output to $logfile\n";
 
-    my @options = qw(-a -v -k);
+    my @options = qw(-a -v);
+    if (defined $self->expandrcskeywords and $self->expandrcskeywords !~ /yes/i) {
+            push @options, "-k";
+    }
     push @options, ("-p", "-x,--no-cvs-direct");
 
     if ($params{author_file}) {
@@ -457,8 +461,10 @@ sub cvs_push {
     print "\n";
 
 
-    my @options = (qw(-k -p -v -u -w), "'$cvs_checkout_dir'");
-
+    my @options = (qw(-p -v -u -w), "'$cvs_checkout_dir'");
+    if (defined $self->expandrcskeywords and $self->expandrcskeywords !~ /yes/i) {
+            push @options, "-k";
+    }
     # If we don't autocommit, we may need to force merges to updated
     # files
     push @options, 
@@ -665,7 +671,8 @@ GetOptions("dry-run"       => \$config{dryrun},
            "no-autocommit" => \$config{no_autocommit},
            "commits=s"     => \$commits,
            "config=s"      => \$config_file,
-           "cvsps-out=s"   => \$config{cvsps_out}) 
+           "cvsps-out=s"   => \$config{cvsps_out},
+           "expandrcskeywords" => \$config{expandrcskeywords}),
     or die "Failed to read parameters: $@";
 
 my $operation = shift @ARGV;
@@ -687,9 +694,9 @@ $config_file ||= $default_config_path
 set_values(\%config, $config_file)
     if $config_file;
 
+$config{expandrcskeywords} = 'no' if not defined($config{expandrcskeywords});
 #use YAML; die Dump \%config;
 my $gitcvs = GitCvs->new(%config);
-
 
 
 # Now invoke the appropriate operation
@@ -786,10 +793,10 @@ sub set_values {
         foreach (<$fh>) {
             next unless /^\s*[^#\s]/;
             chomp;
-            
+
             die "Malformed line in config file '$config_file'\n$_\n"
                 unless /^ \s* (\w+) \s* = \s* (.+?) \s* $/x;
-            
+
 #            print "$1 = $2\n";
             $config_params{$1} = $2;
         }
@@ -801,7 +808,7 @@ sub set_values {
     # corresponding options:
     exists $config_params{$_} 
         and $hash->{$_} = $config_params{$_}
-            foreach qw(cvsroot cvsmodule gitworking);
+            foreach qw(cvsroot cvsmodule gitworking expandrcskeywords);
 }
 
 
@@ -888,6 +895,7 @@ e.g.
   cvsroot=:ext:user\@server.com:/path/to/CVS
   cvsmodule=some-module
   cvsworking=/home/user/cvsworking/some-module
+  expandrcskeywords=yes
 
 This can be put in the Git working directory, and should allow the
 command to be invoked there simply as 'git-cvs push' or 'git-cvs pull'.
